@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.random import randn
 from mnist import MNIST
 
 mndata = MNIST(
