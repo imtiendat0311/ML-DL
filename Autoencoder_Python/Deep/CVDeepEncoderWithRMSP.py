@@ -27,17 +27,24 @@ def create_model(data, hidden_layers, hidden_units, encoded):
     model = {}
     # create first hidden layer
     model['W1'] = np.random.randn(
-        data.shape[1], hidden_units[0]) / np.sqrt(x_train.shape[1])
+        data.shape[1], hidden_units[0]) / np.sqrt(data.shape[1])
     model['b1'] = np.zeros((1, hidden_units[0]))
+    model['v_W1'] = np.zeros((data.shape[1], hidden_units[0]))
+    model['v_b1'] = np.zeros((1, hidden_units[0]))
     # create hidden layers
     for i in range(hidden_layers - 1):
         model['W'+str(i+2)] = np.random.randn(hidden_units[i],
                                               hidden_units[i+1]) / np.sqrt(hidden_units[i])
         model['b'+str(i+2)] = np.zeros((1, hidden_units[i+1]))
+        model['v_W'+str(i+2)] = np.zeros((hidden_units[i], hidden_units[i+1]))
+        model['v_b'+str(i+2)] = np.zeros((1, hidden_units[i+1]))
     # create output layer
     model['W' + str(hidden_layers+1)] = np.random.randn(hidden_units[-1],
                                                         x_train.shape[1]) / np.sqrt(hidden_units[-1])
-    model['b' + str(hidden_layers+1)] = np.zeros((1, x_train.shape[1]))
+    model['b' + str(hidden_layers+1)] = np.zeros((1, data.shape[1]))
+    model['v_W' + str(hidden_layers+1)] = np.zeros(
+        (hidden_units[-1], x_train.shape[1]))
+    model['v_b' + str(hidden_layers+1)] = np.zeros((1, data.shape[1]))
     model['encoded_layer'] = encoded
     model['decoded_layer'] = (hidden_layers+1) - encoded
     return model
@@ -65,7 +72,7 @@ def decoder(model):
         model['a'+str(model['encoded_layer']+1+i)] = a
 
 
-def train(model, training_set, learning_rate=0.0001):
+def train(model, training_set, learning_rate=0.001, beta=0.9, epsilon=1e-8):
     num_epochs = 11
     batch_size = 256
     num_batches = training_set.shape[0] // batch_size
@@ -82,7 +89,7 @@ def train(model, training_set, learning_rate=0.0001):
                 (model['a'+str(model['encoded_layer']+model['decoded_layer'])] - x_batch)**2)
             total_loss += loss  # total loss
             dL_dz = []
-            # backpropagation
+            # backpropagation Root Mean Squared Propagation
             for i in reversed(range(1, model['encoded_layer']+model['decoded_layer']+1)):
                 if (i == model['encoded_layer']+model['decoded_layer']):
                     dL_da = model['a'+str(i)] - x_batch
@@ -95,11 +102,16 @@ def train(model, training_set, learning_rate=0.0001):
                 dL_dW = np.dot(model['a'+str(i-1)].T, dL_dz[-1]) if i - \
                     1 > 0 else np.dot(x_batch.T, dL_dz[-1])
                 dL_db = np.sum(dL_dz[-1], axis=0, keepdims=True)
+                # momentum of W and b
+                model['v_W'+str(i)] = beta * model['v_W' +
+                                                   str(i)] + (1-beta)*dL_dW**2
+                model['v_b'+str(i)] = beta * model['v_b' +
+                                                   str(i)]+(1-beta)*dL_db**2
                 # update weight and bias
-                model['W'+str(i)] -= learning_rate * dL_dW
-                model['b'+str(i)] -= learning_rate * dL_db
-        if (epoch % 10 == 0):
-            print("Epoch {0}: {1}".format(epoch, total_loss / num_batches))
+                model['W'+str(i)] -= learning_rate * dL_dW / \
+                    (np.sqrt(model['v_W'+str(i)])+epsilon)
+                model['b'+str(i)] -= learning_rate * dL_db / \
+                    (np.sqrt(model['v_b'+str(i)])+epsilon)
 
 
 best_loss = np.inf
@@ -110,6 +122,7 @@ for hidden_layer in param_grid['hidden_layers']:
     np.random.shuffle(hidden_unit)
     avg = 0
     for i in range(k):
+        print(i)
         test_set = x_total[i*x_total.shape[0]//k:(i+1)*x_total.shape[0]//k]
         train_set = np.concatenate(
             [x_total[:i*x_total.shape[0]//k], x_total[(i+1)*x_total.shape[0]//k:]])
