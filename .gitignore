@@ -1,0 +1,6 @@
+.vscode
+.DS_Store
+MNIST
+__pycache__
+data
+```
