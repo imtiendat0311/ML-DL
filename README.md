@@ -11,3 +11,9 @@ Neuron network consist of encoder (transform data into lower dimension represent
 ![vae-concept](https://miro.medium.com/v2/resize:fit:772/1*nocBSRodPFu3XD5UXfTwbw.png)
 
 ## Variational Autoencoder + GAN
+
+Promoting Realism by accounting the feedback of discriminator to VAE
+
+## TODO
+
+- [ONNX Runtime](https://onnxruntime.ai/docs/tutorials/web/) - machine learning for webapp
