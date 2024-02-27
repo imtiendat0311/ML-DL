@@ -25,6 +25,16 @@ class VAE(nn.Module):
         return z, mu, log_var, encoder_outputs, decoder_outputs
 
 
+class Generator(nn.Module):
+    def __init__(self, layer: nn.Module):
+        super(Generator, self).__init__()
+        self.layer = layer
+        print("Generator model initialized")
+
+    def forward(self, x: torch.Tensor):
+        return self.layer(x)
+
+
 class Discriminator(nn.Module):
     def __init__(self, layer: nn.Module):
         super(Discriminator, self).__init__()

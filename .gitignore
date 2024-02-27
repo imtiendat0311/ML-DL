@@ -4,4 +4,5 @@ MNIST
 __pycache__
 data
 trained_model
+runs
 ```

@@ -27,7 +27,7 @@ lr_g = 1e-3
 lr_d = 1e-3
 batch_size = 256
 epochs = 100
-alpha = 0.8
+alpha = 1
 beta = 0.5
 threshold = 0.5
 
@@ -126,7 +126,7 @@ for epoch in range(epochs):
         dis_loss.backward()
         dis_opt.step()
 
-        if (dis_loss / (batch_idx)*batch_size*2) < threshold:
+        if (dis_loss / batch_size*2) < threshold:
             # Train Generator
             dis_fake = dis(x_hat)
             dis_loss_fake = BCE(dis_fake, real_label)
